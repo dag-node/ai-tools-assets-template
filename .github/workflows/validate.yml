@@ -1,0 +1,24 @@
+# SPDX-License-Identifier: MIT-0
+# Checks every pull request and every push to main with the reusable
+# workflow from dag-node/ai-tools-assets-tools at a pinned commit. The tools
+# run from that commit, not from this tree.
+name: validate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  # A called job reports its check run as `<this job> / <called job>`. Name
+  # this job for your repository, so its check reads
+  # `<repository> / validate`, the context a ruleset on main requires.
+  ai-tools-assets-template:
+    uses: dag-node/ai-tools-assets-tools/.github/workflows/validate.yml@b11c27282193da07f1067ce905de6974e420c433 # v1.5.0
+    with:
+      # Set to true once every commit must carry a DCO Signed-off-by; until
+      # then the sign-off check reports without failing the job.
+      enforce-signoff: false

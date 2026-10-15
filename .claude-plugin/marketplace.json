@@ -1,0 +1,16 @@
+{
+  "name": "change-me-ai-tools-assets",
+  "owner": {
+    "name": "change-me",
+    "email": "change-me@example.com"
+  },
+  "description": "Skills and subagents for coding agents, released as versioned sets",
+  "plugins": [
+    {
+      "name": "ai-tools-assets-change-me-example",
+      "source": "./sets/change-me-example",
+      "description": "An example set; rename it to start with your publisher name",
+      "license": "MIT-0"
+    }
+  ]
+}

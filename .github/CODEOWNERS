@@ -1,0 +1,10 @@
+# Review requests route to the publisher's maintainers. Replace @change-me
+# with a user or team holding write access to this repository; a code owner
+# without write access is ignored.
+* @change-me
+
+# The publisher identity, the marketplace catalogue and CI decide what
+# a release publishes under your name.
+/publisher.conf @change-me
+/.claude-plugin/ @change-me
+/.github/ @change-me

@@ -1,0 +1,18 @@
+# REUSE (https://reuse.software) licensing and copyright fallbacks.
+#
+# A file's own header, or an adjacent .license file, takes priority; these
+# annotations supply the copyright and the licence a file does not state for
+# itself. Within this file only the last matching annotation applies, so the
+# broad path is listed first. A repository generated from this template adds
+# an annotation for its own sets after this one.
+
+version = 1
+SPDX-PackageName = "ai-tools-assets-template"
+SPDX-PackageDownloadLocation = "https://github.com/dag-node/ai-tools-assets-template"
+
+# The template's skeleton: MIT-0, so a copy may drop or replace this notice.
+[[annotations]]
+path = "**"
+precedence = "closest"
+SPDX-FileCopyrightText = "2026 Ondřej Nedomlel"
+SPDX-License-Identifier = "MIT-0"
