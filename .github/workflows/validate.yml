@@ -21,7 +21,7 @@ jobs:
   # `<repository> / tests (python 3.12)`, the contexts a ruleset on main
   # requires.
   ai-tools-assets-template:
-    uses: dag-node/ai-tools-assets-tools/.github/workflows/validate.yml@b11c27282193da07f1067ce905de6974e420c433 # v1.5.0
+    uses: dag-node/ai-tools-assets-tools/.github/workflows/validate.yml@e94784e4390442112481ff1ae7274d0e16750a89 # v1.6.0
     with:
       # The sign-off check fails the job: CONTRIBUTING.md asks for a DCO
       # sign-off on every commit. A repository that does not ask for one
