@@ -1,0 +1,12 @@
+{
+  "name": "ai-tools-assets-change-me-example",
+  "version": "0.1.0",
+  "description": "An example set; rename it to start with your publisher name",
+  "author": {
+    "name": "change-me",
+    "email": "change-me@example.com"
+  },
+  "homepage": "https://github.com/change-me/ai-tools-assets",
+  "repository": "https://github.com/change-me/ai-tools-assets",
+  "license": "MIT-0"
+}

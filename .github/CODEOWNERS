@@ -1,0 +1,11 @@
+# Review requests route to the maintainers team, which holds write access
+# to this repository; a code owner without write access is ignored.
+# new-publisher writes a copy's own, naming the copy's owners.
+* @dag-node/ai-tools-maintainers
+
+# The publisher identity, its keys, the marketplace catalogue and CI
+# decide what a release publishes under the publisher's name.
+/publisher.conf @dag-node/ai-tools-maintainers
+/keys/ @dag-node/ai-tools-maintainers
+/.claude-plugin/ @dag-node/ai-tools-maintainers
+/.github/ @dag-node/ai-tools-maintainers

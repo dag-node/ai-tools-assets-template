@@ -1,0 +1,37 @@
+# SPDX-License-Identifier: MIT-0
+# Releases a set for its tag, <set>/v<semver>, through the reusable
+# set-release workflow from dag-node/ai-tools-assets-tools, pinned at the
+# same commit as validate.yml. That workflow verifies the tag's signature
+# against tag-signer-fingerprints, runs `tools/validate` and
+# `tools/check-publisher --repository`, builds the set, signs the zip,
+# SHA256SUMS and the RPMs with the key in GPG_SIGNING_KEY, and creates
+# the release.
+#
+# A copy's steps before its first tag: create the `release` environment
+# with a deployment policy that allows tags `*/v*` and no branch, add
+# GPG_SIGNING_KEY and GPG_SIGNING_PASSPHRASE to it, and set the job's three
+# signer inputs, which `new-publisher` writes when given `--tag-signer` and
+# `--artifact-signer`. A tag signed by a key not on the list, or a signing
+# key whose primary is not artifact-signer-fingerprint, stops the release.
+name: release
+
+on:
+  push:
+    tags: ['*/v*']
+
+permissions:
+  contents: read
+
+jobs:
+  # Pinned by commit rather than by the moving `v1` tag: the called workflow
+  # runs with this repository's signing secrets, so the code it runs changes
+  # only in a reviewed commit here.
+  ai-tools-assets-template:
+    uses: dag-node/ai-tools-assets-tools/.github/workflows/set-release.yml@b11c27282193da07f1067ce905de6974e420c433 # v1.5.0
+    permissions:
+      contents: write
+    secrets: inherit
+    with:
+      tag-signer-fingerprints: change-me
+      tag-signer-key-url: https://github.com/change-me.gpg
+      artifact-signer-fingerprint: change-me

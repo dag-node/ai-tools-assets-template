@@ -1,0 +1,129 @@
+# SPDX-License-Identifier: MIT-0
+# Checks every pull request and every push to develop and main with the
+# reusable workflow from dag-node/ai-tools-assets-tools at a pinned commit.
+# The tools run from that commit, not from this tree. Its tests job runs
+# the tests each skill ships with its scripts, at Python 3.9 inside the
+# pinned EL9 image and at 3.12.
+name: validate
+
+on:
+  pull_request:
+  push:
+    branches: [develop, main]
+
+permissions:
+  contents: read
+
+jobs:
+  # A called job reports its check run as `<this job> / <called job>`. The
+  # job is named for the repository, so its checks read
+  # `<repository> / validate`, `<repository> / tests (python 3.9)` and
+  # `<repository> / tests (python 3.12)`, the contexts a ruleset on main
+  # requires.
+  ai-tools-assets-template:
+    uses: dag-node/ai-tools-assets-tools/.github/workflows/validate.yml@b11c27282193da07f1067ce905de6974e420c433 # v1.5.0
+    with:
+      # The sign-off check fails the job: CONTRIBUTING.md asks for a DCO
+      # sign-off on every commit. A repository that does not ask for one
+      # sets false, and the check then reports without failing the job.
+      enforce-signoff: true
+
+  # The template's own proof that a copy initializes: new-publisher over a
+  # copy of this tree, with the tools at the commit the caller job pins,
+  # then the pull-request checks, the release check and a build over the
+  # result. A copy is initialized already and new-publisher refuses
+  # a second run, so the job runs in the template's repository alone and
+  # reports skipped in a copy.
+  initialize:
+    if: github.repository == 'dag-node/ai-tools-assets-template'
+    runs-on: ubuntu-26.04
+    # Bounded like the reusable workflow's jobs; the job does not receive
+    # a secret.
+    timeout-minutes: 5
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      TOOLS: ${{ github.workspace }}/tools
+    steps:
+      - name: Check out the template
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          path: template
+          persist-credentials: false
+
+      # The one full commit the validate caller pins; repin-tools rewrites
+      # that line, so this job follows every re-pin.
+      - name: Read the tools commit the validate caller pins
+        id: tools
+        run: |
+          sha="$(sed -n 's|^ *uses: dag-node/ai-tools-assets-tools/\.github/workflows/validate\.yml@\([0-9a-f]\{40\}\) .*|\1|p' template/.github/workflows/validate.yml)"
+          if ! [[ "$sha" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "template/.github/workflows/validate.yml does not hold one uses: line pinning a full commit of the validate workflow" >&2
+            exit 1
+          fi
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+
+      - name: Check out the tools at that commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: dag-node/ai-tools-assets-tools
+          ref: ${{ steps.tools.outputs.sha }}
+          path: tools
+          persist-credentials: false
+
+      - name: Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+
+      - name: Copy the template without .git
+        run: |
+          mkdir copy
+          tar -C template --exclude=./.git -cf - . | tar -C copy -xf -
+
+      # A fixture identity. The fingerprint is on no key; it fills the signer
+      # inputs, so the placeholder search covers release.yml too.
+      - name: new-publisher initializes the copy
+        working-directory: copy
+        run: |
+          python3 "$TOOLS/tools/new-publisher" --repository acme/ai-tools-assets --contact tools@acme.example \
+            --tag-signer 0123456789ABCDEF0123456789ABCDEF01234567 \
+            --artifact-signer 0123456789ABCDEF0123456789ABCDEF01234567
+
+      - name: The initialized copy passes the pull-request checks and the release check
+        working-directory: copy
+        run: |
+          python3 "$TOOLS/tools/validate"
+          python3 "$TOOLS/tools/sync-manifests" --check
+          python3 "$TOOLS/tools/check-licenses"
+          python3 "$TOOLS/tools/check-publisher" --repository acme/ai-tools-assets
+          python3 -m pip install --quiet --requirement "$TOOLS/.github/requirements-ci.txt"
+          reuse lint
+
+      - name: The initialized copy builds its first set
+        working-directory: copy
+        run: python3 "$TOOLS/tools/build-set" acme
+
+      # Every file of the copy and of its staged set, and validate.yml up to
+      # this job, which a copy keeps and which names the template so that it
+      # is skipped there. The control proves that the search finds
+      # the placeholder in the template's own publisher.conf. grep exits 2
+      # on an unreadable input, which fails the step.
+      - name: No file of the copy names the placeholder or the template
+        working-directory: copy
+        run: |
+          grep -q -e change-me "$GITHUB_WORKSPACE/template/publisher.conf"
+          caller="$(sed '/^  initialize:$/,$d' .github/workflows/validate.yml)"
+          status=0
+          grep -n -i -e change-me -e ai-tools-assets-template <<< "$caller" || status=$?
+          if [ "$status" -eq 0 ]; then
+            echo "the lines above, in .github/workflows/validate.yml, hold the placeholder or the template's name" >&2
+            exit 1
+          fi
+          [ "$status" -eq 1 ] || exit "$status"
+          status=0
+          grep -r -n -i -I --exclude=validate.yml -e change-me -e ai-tools-assets-template . || status=$?
+          if [ "$status" -eq 0 ]; then
+            echo "the lines above hold the placeholder or the template's name" >&2
+            exit 1
+          fi
+          [ "$status" -eq 1 ] || exit "$status"
